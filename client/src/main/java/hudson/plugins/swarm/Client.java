@@ -34,6 +34,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Swarm client.
@@ -85,6 +90,8 @@ public class Client {
     @Option(name = "-help", aliases = "--help", usage = "Show the help screen")
     public boolean help;
 
+    private static Future<?> task;
+    
     public static void main(String... args) throws InterruptedException,
             IOException {
         Client client = new Client();
@@ -101,6 +108,25 @@ public class Client {
             System.exit(0);
         }
         client.run();
+    }
+    
+    public static void start(final String... args) throws InterruptedException,
+            ExecutionException {
+        task = Executors.newSingleThreadExecutor().submit(new Callable<Object>() {
+            public Object call() throws Exception {
+                main(args);
+                return null;
+            }
+        });
+        try {
+            task.get();
+        } catch (CancellationException e) {}
+    }
+
+    public static void stop() {
+    	if (task != null) {
+            task.cancel(true);
+    	}
     }
 
     public Client() throws IOException {
