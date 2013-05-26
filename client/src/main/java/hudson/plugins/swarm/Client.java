@@ -33,7 +33,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Swarm client.
@@ -99,6 +104,7 @@ public class Client {
         Client client = new Client();
         CmdLineParser p = new CmdLineParser(client);
         try {
+            p.parseArgument(loadConfigFile());
             p.parseArgument(args);
         } catch (CmdLineException e) {
             System.out.println(e.getMessage());
@@ -110,6 +116,42 @@ public class Client {
             System.exit(0);
         }
         client.run();
+    }
+
+    private static List<String> loadConfigFile() throws IOException {
+        List<String> config = new ArrayList<String>();
+        try {
+            Properties prop = new Properties();
+            prop.load(new FileInputStream("conf/swarm-client.conf"));
+
+            Map<String, String> env = System.getenv();
+            Pattern expr = Pattern.compile("\\$\\{(\\w+)\\}");
+
+            for (Entry<Object, Object> entry : prop.entrySet()) {
+                String key = (String)entry.getKey();
+                String value = (String)entry.getValue();
+
+                config.add("-" + key);
+                if (!value.isEmpty()) {
+                    // Set environment variables
+                    StringBuilder builder = new StringBuilder();
+                    int pos = 0;
+                    Matcher matcher = expr.matcher(value);
+                    while (matcher.find()) {
+                        builder.append(value.substring(pos, matcher.start()));
+                        builder.append(env.get(matcher.group(1)));
+                        pos = matcher.end();
+                    }
+                    builder.append(value.substring(pos, value.length()));
+
+                    config.add(builder.toString());
+                }
+            }
+
+            System.out.println("Load swarm-client.conf");
+            System.out.println(config);
+        } catch (FileNotFoundException e) {}
+        return config;
     }
 
     public Client() throws IOException {
