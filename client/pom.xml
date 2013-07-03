@@ -64,6 +64,10 @@
                                             <name>wrapper.java.command</name>
                                             <value>jre/bin/java</value>
                                         </property>
+                                        <property>
+                                            <name>wrapper.ntservice.starttype</name>
+                                            <value>DEMAND_START</value>
+                                        </property>
                                     </configuration>
                                 </generatorConfiguration>
                             </generatorConfigurations>
